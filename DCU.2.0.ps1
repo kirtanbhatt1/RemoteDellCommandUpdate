@@ -1,7 +1,12 @@
-# Dell Command Update Script 2.0 - Kirtan Bhatt
+#               Dell Command Update Script 2.0 - Kirtan Bhatt
+
 #    - Includes Installation of DCU Application 
 #    - DCU will be uninstalled and reinstalled if old version is found
-#    - Includes double restart of computer after updates.
+#    - Includes double restart of computer to ensure full BIOS installation
+
+#    - Note: If you are getting a "Not Digitally Signed Error", please right click
+#      on the script file, click "Properties", and check "Unblock" at the bottom
+
 
 function Show-Menu
 {
@@ -134,7 +139,7 @@ Copy-Item "\\data1\AMR\ATS\Software\Other\DELL\Dell Client Command Suite\Command
 Invoke-Command -ComputerName $computerName -ScriptBlock {
 
     # Removing previous versions of DCU
-    Write-Host "`nRemoving Previous Versions. Please wait..."
+    Write-Host "`nChecking to Remove Previous Versions. Please wait..."
 
     Start-Process -FilePath "MsiExec.exe" -ArgumentList "/X{EC542D5D-B608-4145-A8F7-749C02BE6D94} /QN /NoRestart" -Wait
 
@@ -170,17 +175,18 @@ if ($restartInput -eq 'Y' -or $restartInput -eq 'y') {
    
     Start-Sleep -Seconds 30
 
+    Write-Host "Waiting for $computerName to ping for second reboot..."
+
     do {
         $pingResult = Test-Connection -ComputerName $computerName -Count 1 -ErrorAction SilentlyContinue
         if ($pingResult -eq $null) 
             {
-                Write-Host "Waiting for $computerName to ping..."
                 Start-Sleep -Seconds 10  # Adjust the wait time as needed
             }
     } while ($pingResult -eq $null)
 
- 
-    Write-Host "$computerName responded to ping. Starting next restart."
+    Start-Sleep -Seconds 30
+    Write-Host "`n$computerName responded to ping. Starting next restart."
     Restart-Computer -ComputerName $computerName -Force
 
     
